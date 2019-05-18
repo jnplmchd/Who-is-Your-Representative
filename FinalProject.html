@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Representatives</title>
+  <meta charset="utf-8">  
+</head>
+<style>
+img {
+max-width: 100px;
+}
+h3 {
+text-align: center;
+font-size: 20px;
+}
+
+p.Repcon {
+font-size: 25px;
+text-align: center;
+font-weight: bold;
+}
+</style>
+<body>
+<h1 align="center"> Who are your Representatives?  </h1>
+<h2 align="center"> Enter your address to find who your representatives are </h2>
+<div class="row"> <center>
+  <form onsubmit="return false;">   
+    <input id="address"  type="text" placeholder="Enter your address" required="">     
+    <input type="submit" onclick="enterAddress()" value="Submit">       
+  </form> </center>
+</div>       
+<p id="info" class = "Repcon"> </p>   
+<h3 id="image"> </h3>
+</body>
+<script>
+
+var record;
+     
+function enterAddress() {
+     
+    var addressName = document.getElementById('address').value.trim();  
+    var xhttp = new XMLHttpRequest();
+     
+    xhttp.onreadystatechange = function() {              
+      if (this.readyState == 4 && this.status == 200) {                      //if request is successful    
+         recordStr = this.responseText; 
+         record = JSON.parse(recordStr);
+                           
+       var body = document.getElementsByTagName("body")[0];
+       var tbl = document.createElement("table");                            //creating the table and tbody elements
+       var tblBody = document.createElement("tbody");
+       tbl.setAttribute("id", "tableId");         
+      
+       var prevTbl = document.getElementById("tableId")                      //reference to the table
+       if(prevTbl != null) {                                                 //is the table empty?
+          prevTbl.removeChild(prevTbl.childNodes[0])                         //removes the rows of the table
+          document.body.removeChild(prevTbl);           
+       } 
+
+       for (var i = 0; i < record.officials.length; i++) {                   //a loop to create <tr> elements for each official
+       
+         var row = document.createElement("tr");             
+
+         var imgPart = document.createElement("td");                         //creating a <td> element for the photo and party of the official
+         var img = document.createElement('img');
+         img.src = record.officials[i].photoUrl;                             //creating a hyperlink to show image of official      
+         imgPart.appendChild(img);                                           //appending object to the column
+    
+         var party = document.createElement("p");
+         var partyText = document.createTextNode(record.officials[i].party)  //text Node with party of official
+    
+         if(record.officials[i].party == "Democratic") {
+            party.style.color = "blue";
+         }
+         else if (record.officials[i].party == "Republican") {
+            party.style.color = "red";
+         }
+         else {
+            party.style.color = "yellow";
+         }
+            
+         party.appendChild(partyText);                    
+         imgPart.appendChild(party);                                         //attach text node to it's column parent
+         row.appendChild(imgPart);                                           //attach each <td> element to its parent <tr> element
+
+            
+         var nameTitle = document.createElement("td");                       //new <td> element for the name and title of the official
+         var name = document.createElement("p");
+         var nameText = document.createTextNode(record.officials[i].name)     
+         name.style.fontWeight = "bold";
+         name.appendChild(nameText);      
+         nameTitle.appendChild(name);       
+         row.appendChild(nameTitle);       
+
+
+         var address = document.createElement("td");                         //new <td> element for the address of the official
+         var addText1 = document.createTextNode(record.officials[i].address[0].line1 + ", ")                                    
+         address.appendChild(addText1);       
+            
+         if (record.officials[i].address[0].line2 != null ) {                //not all officials had .line2
+            var addText2 = document.createTextNode(record.officials[i].address[0].line2 + ", ")
+            address.appendChild(addText2);                          
+         }       
+      
+         var addText3 = document.createTextNode(record.officials[i].address[0].city + ", ")
+         address.appendChild(addText3);            
+         var addText4 = document.createTextNode(record.officials[i].address[0].state + ", ")
+         address.appendChild(addText4);
+                 
+         var addressText5 = document.createTextNode(record.officials[i].address[0].zip)
+         address.appendChild(addressText5);          
+         row.appendChild(address);                          
+       
+         var contacts = document.createElement("td");                        //new <td> element for the contacts of the official
+         var phoneText = document.createTextNode(record.officials[i].phones)         
+         var a = document.createElement("a");                                //creating an element for the url
+         var linkText = document.createTextNode(record.officials[i].urls);
+         a.setAttribute('href', record.officials[i].urls);                   //setting the link address
+         a.appendChild(linkText);                                            //appending text to the element
+         contacts.appendChild(phoneText);                      
+         contacts.appendChild(document.createElement("br"));                 //creating a break in the text    
+         contacts.appendChild(a);        
+         contacts.appendChild(document.createElement("br"));          
+         row.appendChild(contacts);      
+        
+         tblBody.appendChild(row);                                           //attaching the <tr> elements to the parent <tbody> element 
+         tbl.setAttribute("border", "2");                                    //adding a simple border to the table
+         tbl.setAttribute("align", "center");                                //centering it on the page
+       }
+    
+       tbl.appendChild(tblBody);                                             //attaching the <tbody> element to its parent <table> element
+       body.appendChild(tbl);                                                //attaching the <table> element to the HTML body 
+
+       for (var j = 0; j < 3; j++) {                                         //creating a loop to add the titles to the 2nd column
+         var titleText = document.createTextNode(record.offices[j].name)     //this information was in offices rather than officials
+         tbl.rows[j].cells[1].appendChild(titleText);                        //appending the object directly to the designated cell               
+       }             
+       var titleText1 = document.createTextNode(record.offices[2].name)      //there are two Senators for the one office
+       tbl.rows[3].cells[1].appendChild(titleText1);
+    
+       for (var j = 4; j < record.officials.length; j++) {   
+         var titleText2 = document.createTextNode(record.offices[j-1].name)
+         tbl.rows[j].cells[1].appendChild(titleText2);  
+       }
+
+       for (var z = 0; z < record.officials.length; z++) {                   //creating a loop to add the facebook channel to the 4th column
+         for ( var f = 0; f < record.officials[z].channels.length; f++) {    //loops through all the channels  
+           if(record.officials[z].channels[f] != undefined) {                //if the channel is not undefined
+             if (record.officials[z].channels[f].type == "Facebook") {       //if the channel is facebook              
+                var face = "https://www.facebook.com/"                       //the text shown to the user for the link                  
+                var faceId = document.createTextNode(face);                  //the url ID
+                var facebook = document.createElement("a");
+                facebook.setAttribute('href', "http://www.facebook.com/" + record.officials[z].channels[f].id);   //the domain and the url ID
+                facebook.appendChild(faceId)
+                tbl.rows[z].cells[3].appendChild(facebook);
+                var lineBreak1 = document.createElement("br");
+                tbl.rows[z].cells[3].appendChild(lineBreak1);                 
+             }
+           }
+         }
+       }    
+              
+       for (var z = 0; z < record.officials.length; z++) {                   //creating a loop to add the twitter channel to the 4th column
+         for ( var f = 0; f < record.officials[z].channels.length; f++) {       
+           if(record.officials[z].channels[f] != undefined) {
+             if (record.officials[z].channels[f].type == "Twitter") {              
+                var twit = "https://www.twitter.com/"                                   
+                var twitId = document.createTextNode(twit);
+                var twitter = document.createElement("a");
+                twitter.setAttribute('href', "http://www.twitter.com/" + record.officials[z].channels[f].id);
+                twitter.appendChild(twitId)
+                tbl.rows[z].cells[3].appendChild(twitter);
+                var lineBreak2 = document.createElement("br");
+                tbl.rows[z].cells[3].appendChild(lineBreak2);                      
+             }
+           }
+         }
+       } 
+
+       state = record.normalizedInput.state;
+       var rep = "These are the Representatives and their Contacts for the state of " + state;
+       document.getElementById("info").innerHTML = rep;                                                    
+     } 
+     else {                                                                  //if the request is not successful
+     document.getElementById("info").innerHTML = "Address does not exist";     
+     }
+          
+             
+   //var flag = document.createElement('img');                               //attempt to add the state flag
+   //flag.src = "http://flags.ox3.in/svg/us/" + state.toLowerCase() + ".svg"              
+   //document.getElementById("image").appendChild(flag);
+           
+  }
+                  
+ xhttp.open("GET", "https://www.googleapis.com/civicinfo/v2/representatives?address=" + addressName + "&levels=country&levels=administrativeArea1&roles=deputyHeadOfGovernment&roles=headOfState&roles=legislatorUpperBody&roles=legislatorLowerBody&roles=headOfGovernment&key=:YourKey", true);
+ xhttp.send();
+                        
+};     
+</script>
+</html>
